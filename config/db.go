@@ -3,13 +3,14 @@ package config
 import (
 	"database/sql"
 	"fmt"
+	"os"
 )
 
 var DB *sql.DB
 
 func ConnectToDB() {
 	var err error
-	DB, err = sql.Open("mysql", "root:ayushsql@tcp(127.0.0.1:3306)/authDB")
+	DB, err = sql.Open("mysql", os.Getenv("LOCAL_MYSQL_URL"))
 	if err != nil {
 		fmt.Println(err)
 		panic("Failed to connect to database!")

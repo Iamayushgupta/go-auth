@@ -4,7 +4,10 @@ go 1.21.1
 
 require github.com/gin-gonic/gin v1.9.1
 
-require github.com/go-sql-driver/mysql v1.5.0 // indirect
+require (
+	github.com/go-sql-driver/mysql v1.5.0 // indirect
+	github.com/joho/godotenv v1.5.1 // indirect
+)
 
 require (
 	github.com/bytedance/sonic v1.9.1 // indirect
