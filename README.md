@@ -15,13 +15,6 @@ git clone https://github.com/Iamayushgupta/go-auth.git
 cd go-auth
 ```
 
-### 🧙 Step 2: Forge the Module 🧙
-Invoke the powers of Go and initialize your module!
-
-```
-go mod init github.com/ayush/go-auth
-```
-
 ### 🌌 Step 3: Summon the Dependencies 🌌
 Bring in the powerful dependencies to bolster your project!
 
