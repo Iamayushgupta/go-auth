@@ -8,8 +8,11 @@ import (
 
 func main() {
 	config.ConnectToDB()
+
+	//Defer ensures that the DB connection is closed when main.go exits
 	defer config.DB.Close()
 
+	//Setting up the router
 	r := router.SetupRouter()
 	log.Println("Server is starting and listening on port 8080")
 	r.Run(":8080")

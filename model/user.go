@@ -2,8 +2,8 @@ package model
 
 import (
 	"database/sql"
-	"fmt"
-	"log" 
+	"errors"
+	"log"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -17,34 +17,33 @@ func (u *User) SignUp(DB *sql.DB) error {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
 	if err != nil {
 		log.Printf("Failed to hash password: %v", err) // Log the error
-		return fmt.Errorf("failed to hash password: %v", err)
+		return err
 	}
 
 	_, err = DB.Exec("INSERT INTO users(username, password) VALUES (?, ?)", u.Username, string(hashedPassword))
 	if err != nil {
-		log.Printf("Failed to sign up, possibly duplicate username: %v", err) // Log the error
-		return fmt.Errorf("failed to sign up, possibly duplicate username: %v", err)
+		log.Printf("Failed to sign up :  %v", err) // Log the error
+		return err
 	}
 
-	log.Printf("User %s signed up successfully", u.Username) // Log success
 	return nil
 }
 
 func (u *User) Login(DB *sql.DB) error {
 	var storedPassword string
-	row := DB.QueryRow("SELECT password FROM users WHERE username=?", u.Username)
-	err := row.Scan(&storedPassword)
-	if err != nil {
-		log.Printf("Failed to retrieve user: %v", err) // Log the error
-		return err
+	err := DB.QueryRow("SELECT password FROM users WHERE username=?", u.Username).Scan(&storedPassword)
+	if err == sql.ErrNoRows {
+		log.Printf(u.Username + " username does not exist")
+		return errors.New("user not found")
+	} else if err != nil {
+		log.Printf("Database error during login for user %s: %v", u.Username, err)
+		return errors.New("internal server error")
 	}
 
-	err = bcrypt.CompareHashAndPassword([]byte(storedPassword), []byte(u.Password))
-	if err != nil {
-		log.Printf("Login failed for user %s: %v", u.Username, err) // Log the error
-		return err
+	if err := bcrypt.CompareHashAndPassword([]byte(storedPassword), []byte(u.Password)); err != nil {
+		log.Printf("Wrong password error : %v",err)
+		return errors.New("invalid password")
 	}
-
-	log.Printf("User %s logged in successfully", u.Username) // Log success
+	
 	return nil
 }
