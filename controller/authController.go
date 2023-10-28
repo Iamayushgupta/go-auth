@@ -128,3 +128,39 @@ func AuthRequired(c *gin.Context) {
 	}
 	c.Next()
 }
+
+
+func JwtSignUp(c *gin.Context) {
+	var user model.User
+	if err := c.BindJSON(&user); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
+		return
+	}
+
+	if err := user.JwtSignUp(); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to sign up"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Sign up successful"})
+}
+
+func JwtLogin(c *gin.Context) {
+	var user model.User
+	if err := c.BindJSON(&user); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
+		return
+	}
+
+	token, err := user.JwtLogin()
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid username or password"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"token": token})
+}
+
+func SecureEndpoint(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{"message": "You are authenticated"})
+}

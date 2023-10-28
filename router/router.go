@@ -2,6 +2,7 @@ package router
 
 import (
 	"github.com/ayush/go-auth/controller"
+	"github.com/ayush/go-auth/middleware"
 	"github.com/gin-gonic/gin"
 )
 
@@ -10,8 +11,13 @@ func SetupRouter() *gin.Engine {
 	r := gin.Default()
 	r.POST("/basic-auth/signup", controller.SignUp)
 	r.POST("/basic-auth/login", controller.Login)
+
 	r.POST("/session/login", controller.SessionLogin)
 	r.GET("/session/dashboard", controller.AuthRequired, controller.Dashboard)
 	r.GET("/session/logout", controller.SessionLogout)
+
+	r.POST("/jwt/signup", controller.JwtSignUp)
+	r.POST("/jwt/login", controller.JwtLogin)
+	r.GET("/jwt/secure", middleware.Authenticate(), controller.SecureEndpoint)
 	return r
 }
