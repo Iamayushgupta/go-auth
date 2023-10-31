@@ -14,9 +14,8 @@ func SetupRouter() *gin.Engine {
 
 	r.POST("/session/login", controller.SessionLogin)
 	r.GET("/session/dashboard", controller.AuthRequired, controller.Dashboard)
-	r.GET("/session/logout", controller.SessionLogout)
+	r.GET("/session/logout", controller.AuthRequired,controller.SessionLogout)
 
-	r.POST("/jwt/signup", controller.JwtSignUp)
 	r.POST("/jwt/login", controller.JwtLogin)
 	r.GET("/jwt/secure", middleware.Authenticate(), controller.SecureEndpoint)
 	return r

@@ -2,14 +2,12 @@ package model
 
 import (
 	"database/sql"
-	"errors"
 	"log"
-	"fmt"
-	"time"
-	"github.com/dgrijalva/jwt-go"
+	"net/http"
+	"github.com/ayush/go-auth/config"
+	"github.com/ayush/go-auth/util"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"golang.org/x/crypto/bcrypt"
-	"github.com/ayush/go-auth/config"
 )
 
 type User struct {
@@ -17,86 +15,61 @@ type User struct {
 	Password string `json:"password"`
 }
 
-func (u *User) SignUp(DB *sql.DB) error {
+func (u *User) SignUp() (int,string) {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
 	if err != nil {
 		log.Printf("Failed to hash password: %v", err) // Log the error
-		return err
-	}
-
-	_, err = DB.Exec("INSERT INTO users(username, password) VALUES (?, ?)", u.Username, string(hashedPassword))
-	if err != nil {
-		log.Printf("Failed to sign up :  %v", err) // Log the error
-		return err
-	}
-
-	return nil
-}
-
-func (u *User) Login(DB *sql.DB) error {
-	var storedPassword string
-	err := DB.QueryRow("SELECT password FROM users WHERE username=?", u.Username).Scan(&storedPassword)
-	if err == sql.ErrNoRows {
-		log.Printf(u.Username + " username does not exist")
-		return errors.New("user not found")
-	} else if err != nil {
-		log.Printf("Database error during login for user %s: %v", u.Username, err)
-		return errors.New("internal server error")
-	}
-
-	if err := bcrypt.CompareHashAndPassword([]byte(storedPassword), []byte(u.Password)); err != nil {
-		log.Printf("Wrong password error : %v",err)
-		return errors.New("invalid password")
-	}
-	
-	return nil
-}
-
-func (u *User) JwtSignUp() error {
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
-	if err != nil {
-		return fmt.Errorf("failed to hash password: %v", err)
+		return http.StatusInternalServerError, "Internal Server Error"
 	}
 
 	_, err = config.DB.Exec("INSERT INTO users(username, password) VALUES (?, ?)", u.Username, string(hashedPassword))
 	if err != nil {
-		return fmt.Errorf("failed to sign up: %v", err)
+		log.Printf("Failed to sign up :  %v", err) // Log the error
+		return http.StatusConflict,"Username already exist"
 	}
 
-	return nil
+	return http.StatusOK,""
 }
 
-func (u *User) JwtLogin() (string, error) {
-	var user User
-	row := config.DB.QueryRow("SELECT username, password FROM users WHERE username=?", u.Username)
-	err := row.Scan(&user.Username, &user.Password)
+func (u *User) Login() (int,string) {
+	var storedPassword string
+	err := config.DB.QueryRow("SELECT password FROM users WHERE username=?", u.Username).Scan(&storedPassword)
 	if err == sql.ErrNoRows {
-		return "", fmt.Errorf("user not found")
-	}
-	if err != nil {
-		return "", fmt.Errorf("query error: %v", err)
-	}
-
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(u.Password)); err != nil {
-		return "", fmt.Errorf("invalid password")
+		log.Printf(u.Username + " username does not exist")
+		return http.StatusNotFound,"Username does not exist"
+	} else if err != nil {
+		log.Printf("Database error during login for user %s: %v", u.Username, err)
+		return http.StatusInternalServerError,"Internal Server Error"
 	}
 
-	token, err := createToken(user.Username)
-	if err != nil {
-		return "", fmt.Errorf("could not create token: %v", err)
+	if err := bcrypt.CompareHashAndPassword([]byte(storedPassword), []byte(u.Password)); err != nil {
+		log.Printf("Wrong password error : %v",err)
+		return http.StatusUnauthorized,"Password is incorrect"
 	}
-
-	return token, nil
+	
+	return http.StatusAccepted,""
 }
 
-func createToken(username string) (string, error) {
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"username": username,
-		"exp":      time.Now().Add(time.Hour * 24).Unix(),
-	})
-	tokenString, err := token.SignedString([]byte("my_secret_key"))
-	if err != nil {
-		return "", fmt.Errorf("could not sign token: %v", err)
+func (u *User) JwtLogin() (int,string, string) {
+	var storedPassword string
+	err := config.DB.QueryRow("SELECT password FROM users WHERE username=?", u.Username).Scan(&storedPassword)
+	if err == sql.ErrNoRows {
+		log.Printf(u.Username + " username does not exist")
+		return http.StatusNotFound,"Username does not exist",""
+	} else if err != nil {
+		log.Printf("Database error during login for user %s: %v", u.Username, err)
+		return http.StatusInternalServerError,"Internal Server Error",""
 	}
-	return tokenString, nil
+
+	if err := bcrypt.CompareHashAndPassword([]byte(storedPassword), []byte(u.Password)); err != nil {
+		log.Printf("Wrong password error : %v",err)
+		return http.StatusUnauthorized,"Password is incorrect",""
+	}
+	
+	token, err := util.GenerateToken(u.Username)
+	if err != nil {
+		return http.StatusInternalServerError, "Could not generate a Token",""
+	}
+
+	return http.StatusOK,"",token
 }
