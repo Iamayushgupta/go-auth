@@ -4,11 +4,15 @@ import (
 	"log"
 	"net/http"
 	"os"
+
 	"github.com/ayush/go-auth/model"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/sessions"
 )
 
+// Router name change  ****
+// Making constants for error message
+// Adding command to format all files in makefile
 func SignUp(c *gin.Context) {
 	var user model.User
 	if err := c.BindJSON(&user); err != nil {
@@ -17,18 +21,20 @@ func SignUp(c *gin.Context) {
 		return
 	}
 
-	statusCode,err := user.SignUp()
+	// Instead of having those methods inside user, create a service and pass these variables to the service
+	// Pass the user object to the service
+	statusCode, err := user.SignUp()
 	if err != "" {
 		c.JSON(statusCode, gin.H{"error": err})
 		return
 	}
 
+	// Moving these constants as constants
 	log.Printf("User %s signed up successfully", user.Username)
 	c.JSON(statusCode, gin.H{"message": "signup successful"})
 }
 
-
-//Basic-Auth Login
+// Basic-Auth Login
 func Login(c *gin.Context) {
 	var user model.User
 	if err := c.ShouldBindJSON(&user); err != nil {
@@ -36,21 +42,22 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	statusCode,err := user.Login()
+	// The same user service should implement this login
+	statusCode, err := user.Login()
 
-	if err !="" {
-		c.JSON(statusCode, gin.H{"error":err})
+	if err != "" {
+		c.JSON(statusCode, gin.H{"error": err})
 		return
 	}
 
+	// Changing this message
 	log.Printf("User %s logged up successfully", user.Username)
 	c.JSON(statusCode, gin.H{"message": "Login successful"})
 }
 
-
 var store = sessions.NewCookieStore([]byte("secret"))
 
-//Session Login
+// Session Login
 func SessionLogin(c *gin.Context) {
 	var user model.User
 	if err := c.BindJSON(&user); err != nil {
@@ -59,22 +66,22 @@ func SessionLogin(c *gin.Context) {
 		return
 	}
 
-	statusCode,err := user.Login()
+	statusCode, err := user.Login()
 
-	if err !="" {
-		c.JSON(statusCode, gin.H{"error":err})
+	if err != "" {
+		c.JSON(statusCode, gin.H{"error": err})
 		return
 	}
-		
-	// store - An instance of a session store created using the Gorilla Sessions package. 
+
+	// store - An instance of a session store created using the Gorilla Sessions package.
 	//This store is responsible for managing session data and cookies.
 	//Get(c.Request, "mysession"): This method tries to retrieve an existing
-	//session by the name "mysession" from the user's browser cookies. 
+	//session by the name "mysession" from the user's browser cookies.
 	//If a session with this name does not exist, a new session is created.
 	session, _ := store.Get(c.Request, os.Getenv("SESSION_NAME"))
 	session.Values["username"] = user.Username
 
-	// session.Save (c.Request, c.Writer): This method writes the session cookie to the user's browser. 
+	// session.Save (c.Request, c.Writer): This method writes the session cookie to the user's browser.
 	//It takes the current HTTP request and response writer as arguments.
 	if err := session.Save(c.Request, c.Writer); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save session"})
@@ -86,24 +93,24 @@ func SessionLogin(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Login successful"})
 }
 
-//Session Dashboard
+// Session Dashboard
 func Dashboard(c *gin.Context) {
 	session, _ := store.Get(c.Request, os.Getenv("SESSION_NAME"))
 	username := session.Values["username"]
-	log.Printf("User %s accessed the dashboard",username)
+	log.Printf("User %s accessed the dashboard", username)
 	c.JSON(http.StatusOK, gin.H{"message": "Welcome to the dashboard", "user": username})
 }
 
-//Session Logout
+// Session Logout
 func SessionLogout(c *gin.Context) {
 	session, _ := store.Get(c.Request, os.Getenv("SESSION_NAME"))
-	log.Printf("User %s logged out successfully",session.Values["username"])
+	log.Printf("User %s logged out successfully", session.Values["username"])
 	session.Values["username"] = nil
 	session.Save(c.Request, c.Writer)
 	c.JSON(http.StatusOK, gin.H{"message": "Logged out successfully"})
 }
 
-//Session Auth
+// Session Auth
 func AuthRequired(c *gin.Context) {
 	session, _ := store.Get(c.Request, os.Getenv("SESSION_NAME"))
 	if session.Values["username"] == nil {
@@ -115,8 +122,7 @@ func AuthRequired(c *gin.Context) {
 	c.Next()
 }
 
-
-//Login using JWT
+// Login using JWT
 func JwtLogin(c *gin.Context) {
 	var user model.User
 	if err := c.BindJSON(&user); err != nil {
@@ -124,7 +130,8 @@ func JwtLogin(c *gin.Context) {
 		return
 	}
 
-	statusCode,err, token := user.JwtLogin()
+	//This should also be part of some jwt class
+	statusCode, err, token := user.JwtLogin()
 	if err != "" {
 		c.JSON(statusCode, gin.H{"error": err})
 		return

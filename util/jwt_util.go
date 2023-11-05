@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"time"
 	"github.com/dgrijalva/jwt-go"
+	"os"
 )
 
-const secretKey = "my_secret_key"
+var secretKey = os.Getenv("JWT_SECRET_KEY")
 
+// Returning token
 func GenerateToken(username string) (string, error) {
 	// Creating a new token with the HS256 signing method and a MapClaims type
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
