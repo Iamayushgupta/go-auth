@@ -18,7 +18,7 @@ func SetupRouter() *gin.Engine {
 	//Changing entire session logic to allow multiple users to login simultaneously
 	r.POST("/v2/login", controller.SessionLogin)
 	r.GET("/v2/dashboard", controller.AuthRequired, controller.Dashboard)
-	r.GET("/v2/logout", controller.AuthRequired,controller.SessionLogout)
+	r.GET("/v2/logout", controller.AuthRequired, controller.SessionLogout)
 
 	r.POST("/v3/login", controller.JwtLogin)
 	r.GET("/v3/secure", middleware.Authenticate(), controller.SecureEndpoint)

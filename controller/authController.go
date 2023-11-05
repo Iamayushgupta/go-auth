@@ -24,12 +24,11 @@ func SignUp(c *gin.Context) {
 	// Instead of having those methods inside user, create a service and pass these variables to the service
 	// Pass the user object to the service
 	statusCode, err := user.SignUp()
-	if err != "" {
-		c.JSON(statusCode, gin.H{"error": err})
+	if err != nil {
+		c.JSON(statusCode, gin.H{"error": err.Error()})
 		return
 	}
 
-	// Moving these constants as constants
 	log.Printf("User %s signed up successfully", user.Username)
 	c.JSON(statusCode, gin.H{"message": "signup successful"})
 }
@@ -45,13 +44,13 @@ func Login(c *gin.Context) {
 	// The same user service should implement this login
 	statusCode, err := user.Login()
 
-	if err != "" {
-		c.JSON(statusCode, gin.H{"error": err})
+	if err != nil {
+		c.JSON(statusCode, gin.H{"error": err.Error()})
 		return
 	}
 
 	// Changing this message
-	log.Printf("User %s logged up successfully", user.Username)
+	log.Printf("User %s logged in successfully", user.Username)
 	c.JSON(statusCode, gin.H{"message": "Login successful"})
 }
 
@@ -68,8 +67,8 @@ func SessionLogin(c *gin.Context) {
 
 	statusCode, err := user.Login()
 
-	if err != "" {
-		c.JSON(statusCode, gin.H{"error": err})
+	if err != nil {
+		c.JSON(statusCode, gin.H{"error": err.Error()})
 		return
 	}
 

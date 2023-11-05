@@ -2,6 +2,7 @@ package model
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -20,11 +21,11 @@ type User struct {
 // That class should handle bcrypt and other relevant methods
 // Using zap for logging - Uber zap library
 
-func (u *User) SignUp() (int, string) {
+func (u *User) SignUp() (int, error) {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
 	if err != nil {
 		log.Printf("Failed to hash password: %v", err) // Log the error
-		return http.StatusInternalServerError, "Internal Server Error"
+		return http.StatusInternalServerError, fmt.Errorf("internal Server Error")
 	}
 
 	// Moving these db functions to another class
@@ -34,38 +35,36 @@ func (u *User) SignUp() (int, string) {
 	if err != nil {
 		log.Printf("Failed to sign up :  %v", err) // Log the error
 		// You have to check according to error
-		return http.StatusConflict, "Username already exist"
+		return http.StatusConflict, fmt.Errorf("username already exist")
 	}
 
-	// Return nil instead of empty string
-	// Return an error instead of just string
-	return http.StatusOK, ""
+	// Return nil instead of empty string  *****
+	return http.StatusOK, nil
 }
 
 // Making this more readable
-//
-func (u *User) Login() (int, string) {
-	// Rename to fetched password or something
+func (u *User) Login() (int, error) {
+	// Rename to fetched password or something  *****
 	var storedPassword string
-	// Moving this method to some DB class 
+	// Moving this method to some DB class
 	err := config.DB.QueryRow("SELECT password FROM users WHERE username=?", u.Username).Scan(&storedPassword)
 
-	// Returning errors instead of strings
+	// Returning errors instead of strings  *****
 	if err == sql.ErrNoRows {
 		log.Printf(u.Username + " username does not exist")
-		return http.StatusNotFound, "Username does not exist"
+		return http.StatusNotFound, fmt.Errorf("username does not exist")
 	} else if err != nil {
 		log.Printf("Database error during login for user %s: %v", u.Username, err)
-		return http.StatusInternalServerError, "Internal Server Error"
+		return http.StatusInternalServerError, fmt.Errorf("internal Server Error")
 	}
 
 	// This method will go to another class
 	if err := bcrypt.CompareHashAndPassword([]byte(storedPassword), []byte(u.Password)); err != nil {
 		log.Printf("Wrong password error : %v", err)
-		return http.StatusUnauthorized, "Password is incorrect"
+		return http.StatusUnauthorized, fmt.Errorf("password is incorrect")
 	}
 
-	return http.StatusAccepted, ""
+	return http.StatusAccepted, nil
 }
 
 // Fix the return fields, maybe token, class with fields err code and err
