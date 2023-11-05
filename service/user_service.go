@@ -56,27 +56,27 @@ func (us *UserService) Login(u *model.User) (int, error) {
 	return http.StatusAccepted, nil
 }
 
-func (us *UserService) JwtLogin(u *model.User) (int, error, string) {
+func (us *UserService) JwtLogin(u *model.User) (int, *model.Token, error) {
 	if !util.UserExists(config.DB, u.Username) {
 		log.Printf("Username does not exists")
-		return http.StatusNotFound, fmt.Errorf("username does not exists"), ""
+		return http.StatusNotFound, &model.Token{TokenString: ""}, fmt.Errorf("username does not exists")
 	}
 
 	storedPassword, err := util.GetUserPassword(config.DB, u.Username)
 	if err != nil {
 		log.Printf("Database error during login for user %s: %v", u.Username, err)
-		return http.StatusInternalServerError, fmt.Errorf("internal Server Error"), ""
+		return http.StatusInternalServerError, &model.Token{TokenString: ""}, fmt.Errorf("internal Server Error")
 	}
 
 	if err := util.ComparePasswords(storedPassword, u.Password); err != nil {
 		log.Printf("Wrong password error : %v", err)
-		return http.StatusUnauthorized, fmt.Errorf("password is incorrect"), ""
+		return http.StatusUnauthorized, &model.Token{TokenString: ""}, fmt.Errorf("password is incorrect")
 	}
 
 	token, err := util.GenerateToken(u.Username)
 	if err != nil {
-		return http.StatusInternalServerError, fmt.Errorf("Could not generate a Token"), ""
+		return http.StatusInternalServerError, &model.Token{TokenString: ""}, fmt.Errorf("could not generate a Token")
 	}
 
-	return http.StatusAccepted, nil, token
+	return http.StatusAccepted, token, nil
 }

@@ -31,6 +31,7 @@ func SignUp(c *gin.Context, userService *service.UserService) {
 func Login(c *gin.Context, userService *service.UserService) {
 	var user model.User
 	if err := c.ShouldBindJSON(&user); err != nil {
+		log.Printf("Failed to bind JSON input for signup: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
 		return
 	}
@@ -50,16 +51,17 @@ func Login(c *gin.Context, userService *service.UserService) {
 func JwtLogin(c *gin.Context, userService *service.UserService) {
 	var user model.User
 	if err := c.BindJSON(&user); err != nil {
+		log.Printf("Failed to bind JSON input for signup: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
 		return
 	}
 
-	statusCode, err, token := userService.JwtLogin(&user)
+	statusCode, token, err := userService.JwtLogin(&user)
 	if err != nil {
 		c.JSON(statusCode, gin.H{"error": err.Error()})
 		return
 	}
-
+	log.Printf("Token Generated Successfully for user %s", user.Username)
 	c.JSON(http.StatusOK, gin.H{"token": token})
 }
 
