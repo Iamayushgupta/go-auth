@@ -1,30 +1,25 @@
 package controller
 
 import (
-	"github.com/ayush/go-auth/model"
 	"github.com/ayush/go-auth/service"
 	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
 )
 
-const (
-	invalidInputError      = "Invalid input"
-	internalServerError    = "Internal Server Error"
-	usernameExistsError    = "Username already exists"
-	usernameNotFoundError  = "Username does not exist"
-	incorrectPasswordError = "Password is incorrect"
-	tokenGenerationError   = "Could not generate a Token"
-)
+func handleError(c *gin.Context, statusCode int, message string) {
+	log.Printf("Error: %s", message)
+	c.JSON(statusCode, gin.H{"error": message})
+}
 
 func SignUp(c *gin.Context, userService *service.UserService) {
-	var user model.User
-	if err := c.BindJSON(&user); err != nil {
-		handleError(c, http.StatusBadRequest, invalidInputError)
+	user, err := userService.BindUserFromJSON(c)
+	if err != nil {
+		handleError(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	statusCode, err := userService.SignUp(&user)
+	statusCode, err := userService.SignUp(user)
 	if err != nil {
 		handleError(c, statusCode, err.Error())
 		return
@@ -35,13 +30,13 @@ func SignUp(c *gin.Context, userService *service.UserService) {
 }
 
 func Login(c *gin.Context, userService *service.UserService) {
-	var user model.User
-	if err := c.ShouldBindJSON(&user); err != nil {
-		handleError(c, http.StatusBadRequest, invalidInputError)
+	user, err := userService.BindUserFromJSON(c)
+	if err != nil {
+		handleError(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	statusCode, err := userService.Login(&user)
+	statusCode, err := userService.Login(user)
 	if err != nil {
 		handleError(c, statusCode, err.Error())
 		return
@@ -52,13 +47,13 @@ func Login(c *gin.Context, userService *service.UserService) {
 }
 
 func JwtLogin(c *gin.Context, userService *service.UserService) {
-	var user model.User
-	if err := c.BindJSON(&user); err != nil {
-		handleError(c, http.StatusBadRequest, invalidInputError)
+	user, err := userService.BindUserFromJSON(c)
+	if err != nil {
+		handleError(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	statusCode, token, err := userService.JwtLogin(&user)
+	statusCode, token, err := userService.JwtLogin(user)
 	if err != nil {
 		handleError(c, statusCode, err.Error())
 		return
@@ -70,9 +65,4 @@ func JwtLogin(c *gin.Context, userService *service.UserService) {
 
 func SecureEndpoint(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "You are authenticated"})
-}
-
-func handleError(c *gin.Context, statusCode int, message string) {
-	log.Printf("Error: %s", message)
-	c.JSON(statusCode, gin.H{"error": message})
 }
