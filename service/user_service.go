@@ -43,6 +43,8 @@ func (us *UserService) SignUp(u *model.User) (int, error) {
 		return http.StatusInternalServerError, fmt.Errorf(internalServerError)
 	}
 
+	// Make a util class like you made user service and then call methods using user service
+	// Let db be a dependency needed for creating user service
 	if util.UserExists(config.DB, u.Username) {
 		log.Printf("Username already exists")
 		return http.StatusConflict, fmt.Errorf(usernameExistsError)
@@ -53,11 +55,13 @@ func (us *UserService) SignUp(u *model.User) (int, error) {
 		return http.StatusInternalServerError, err
 	}
 
+	// Check if we have to return the cookie here or not
 	return http.StatusOK, nil
 }
 
 func (us *UserService) Login(u *model.User) (int, error) {
 	if !util.UserExists(config.DB, u.Username) {
+		// Check what is the value of username
 		log.Printf("Username does not exists")
 		return http.StatusNotFound, fmt.Errorf(usernameNotFoundError)
 	}

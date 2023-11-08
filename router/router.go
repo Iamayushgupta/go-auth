@@ -20,15 +20,23 @@ func SetupRouter() *gin.Engine {
 		userGroup1.POST("/login", func(c *gin.Context) {
 			controller.Login(c, userService)
 		})
-
-		userGroup3 := r.Group("/v3")
-		{
-			userGroup3.POST("/login", func(c *gin.Context) {
-				controller.JwtLogin(c, userService)
-			})
-			userGroup3.GET("/dashboard", middleware.Authenticate(), controller.SecureEndpoint)
-		}
-
-		return r
 	}
+	userGroup2 := r.Group("/v2")
+	{
+		userGroup2.POST("/login", func(c *gin.Context) {
+			controller.SessionLogin(c, userService)
+		})
+		userGroup2.GET("/dashboard", controller.Dashboard)
+		userGroup2.GET("/logout", controller.SessionLogout)
+	}
+
+	userGroup3 := r.Group("/v3")
+	{
+		userGroup3.POST("/login", func(c *gin.Context) {
+			controller.JwtLogin(c, userService)
+		})
+		userGroup3.GET("/dashboard", middleware.Authenticate(), controller.SecureEndpoint)
+	}
+
+	return r
 }
