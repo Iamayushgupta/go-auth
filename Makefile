@@ -12,4 +12,8 @@ hosted:
 	@make connect
 
 connect:
+	@make format
 	@go run main.go
+
+format:
+	go fmt ./...

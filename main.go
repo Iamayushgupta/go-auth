@@ -8,7 +8,7 @@ import (
 
 func main() {
 	config.ConnectToDB()
-
+	config.InitializeRedisClient()
 	//Defer ensures that the DB connection is closed when main.go exits
 	defer config.DB.Close()
 
